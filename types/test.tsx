@@ -128,11 +128,20 @@ export function wrappedRender(
   ui: React.ReactNode,
   options?: pure.RenderOptions,
 ) {
-  const Wrapper = ({children}: {children: React.ReactNode}): JSX.Element => {
+  const Wrapper = ({
+    children,
+  }: {
+    children: React.ReactNode
+  }): React.JSX.Element => {
     return <div>{children}</div>
   }
 
-  return pure.render(ui, {wrapper: Wrapper, ...options})
+  return pure.render(ui, {
+    wrapper: Wrapper,
+    // testing exactOptionalPropertyTypes comaptibility
+    hydrate: options?.hydrate,
+    ...options,
+  })
 }
 
 export function wrappedRenderB(
@@ -252,6 +261,28 @@ export function testContainer() {
     hydrate: true,
   })
   renderHook(() => null, {container: document, hydrate: true})
+}
+
+export function testErrorHandlers() {
+  // React 19 types are not used in tests. Verify manually if this works with `"@types/react": "npm:types-react@rc"`
+  render(null, {
+    // Should work with React 19 types
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
+    onCaughtError: () => {},
+  })
+  render(null, {
+    // Should never work as it's not supported yet.
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
+    onUncaughtError: () => {},
+  })
+  render(null, {
+    onRecoverableError: (error, errorInfo) => {
+      console.error(error)
+      console.log(errorInfo.componentStack)
+    },
+  })
 }
 
 /*
